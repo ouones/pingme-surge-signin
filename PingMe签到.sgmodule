@@ -2,12 +2,12 @@
 #!desc=PingMe 自动签到、任务和视频奖励
 #!author=奶思
 #!homepage=https://github.com/fmz200/wool_scripts
-#!arguments=morning_hour:8,evening_hour:20
-#!arguments-desc=设置早晚签到时间（仅填写小时，24 小时制；默认 08:30 和 20:30）
+#!arguments=enable_cookie_capture:true,cronExp:30 8\,20 \* \* \*
+#!arguments-desc=enable_cookie_capture: 是否启用 cookies 抓取脚本；cronExp: PingMe 签到 Cron 表达式
 
 [Script]
-PingMe获取签到参数 = type=http-request, pattern=^https:\/\/api\.pingmeapp\.net\/app\/queryBalanceAndBonus, script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/cookie/get_cookie.js, timeout=60
-PingMe签到 = type=cron, cronexp=30 {{{morning_hour}}},{{{evening_hour}}} * * *, script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/PingMe/PingMeSignin.js, timeout=300, script-update-interval=0
+PingMe获取签到参数 = type=http-request, pattern=^https:\/\/api\.pingmeapp\.net\/app\/queryBalanceAndBonus, script-path=https://raw.githubusercontent.com/ouones/pingme-surge-signin/main/PingMeCookieCapture.js, timeout=60, argument=Enable={{{enable_cookie_capture}}}
+PingMe签到 = type=cron, cronexp="{{{cronExp}}}", script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/PingMe/PingMeSignin.js, timeout=300, script-update-interval=0
 
 [MITM]
 hostname = %APPEND% api.pingmeapp.net

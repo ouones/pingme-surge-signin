@@ -28,16 +28,22 @@
 
 模块声明了两个可编辑参数：
 
-- `morning_hour`：早间签到小时，默认 `8`
-- `evening_hour`：晚间签到小时，默认 `20`
+- `enable_cookie_capture`：cookies/签到参数抓取开关，默认 `true`
+- `cronExp`：签到脚本 Cron 表达式，默认 `30 8,20 * * *`
 
-分钟固定为 `30`。参数只填写小时数字，例如设置为 `9` 和 `21` 后，签到时间变为 09:30 和 21:30。
+`cronExp` 使用 Surge 支持的五段 Cron 表达式。例如：
+
+```text
+30 8,20 * * *
+```
+
+表示每天 08:30 和 20:30 执行。关闭 `enable_cookie_capture` 后，抓取脚本仍会被匹配，但会直接跳过保存，不会读取或写入签到参数。
 
 ## 远程脚本
 
 本模块引用以下远程脚本：
 
-- [get_cookie.js](https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/cookie/get_cookie.js)
+- [PingMeCookieCapture.js](https://raw.githubusercontent.com/ouones/pingme-surge-signin/main/PingMeCookieCapture.js)
 - [PingMeSignin.js](https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/PingMe/PingMeSignin.js)
 
 首次抓取参数的脚本会读取匹配请求的 URL 和请求头，并保存签到所需参数。获取成功后应关闭该脚本，避免重复捕获和通知。
