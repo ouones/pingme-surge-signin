@@ -8,9 +8,10 @@ Version : v1.1.0 (Surge)
 功能: 请求头捕获 + 每日定时签到
 
 使用说明:
-  1. 打开模块参数「Cookie 抓取」，访问 NodeSeek 个人名片页保存请求头
-  2. 收到「Cookie 成功」通知后关闭「Cookie 抓取」
-  3. 签到时间由模块参数「时」「分」控制
+  1. 模块参数 enable_cookie 默认「开」，访问一次 NodeSeek 个人名片页即保存请求头
+  2. 收到「Cookie 成功」通知后，把 enable_cookie 改为「关」
+  3. 签到时间由模块参数 hour、minute 控制
+  4. fixed_legs：随机=领取金额不定（默认），固定=每次固定 5 个
 
 平台差异（相对 Egern 原版）:
   - ctx.storage -> $persistentStore
@@ -61,14 +62,26 @@ function sleep(ms) {
 }
 
 // ---- 模块参数解析：Surge 以 "KEY=value&KEY2=value2" 传入 $argument ----
+// Surge 限定参数名只能用字母/数字/下划线，所以参数名是英文；
+// 但参数值可以用中文，UI 里因此显示为「开/关」「随机/固定」，并兼容 ASCII 写法。
+const OFF_WORDS = ["0", "false", "no", "off", "关", "否", "停用", "关闭"];
+const FIXED_WORDS = ["1", "true", "yes", "on", "固定"];
+
 function arg(key) {
   const raw = typeof $argument === "string" ? $argument : "";
   const m = raw.match(new RegExp("(?:^|&)" + key + "=([^&]*)", "i"));
   return m ? decodeURIComponent(m[1]).trim() : "";
 }
 
-function argTrue(key) {
-  return ["1", "true", "yes", "on"].indexOf(arg(key).toLowerCase()) !== -1;
+// 开关：非空且不是明确的关闭词，即视为开启（默认开）
+function argOn(key) {
+  const v = arg(key).toLowerCase();
+  return v !== "" && OFF_WORDS.indexOf(v) === -1;
+}
+
+// 鸡腿模式：值为「固定」才是固定 5 个，其余（含空值「随机」）都是随机
+function argFixedLegs() {
+  return FIXED_WORDS.indexOf(arg("FIXED_LEGS").toLowerCase()) !== -1;
 }
 
 // ---- 存储 ----
@@ -119,7 +132,7 @@ function buildAttendHeaders(saved) {
 
 // ---- Cookie 捕获（http-request）----
 async function captureHeaders() {
-  if (!argTrue("ENABLE_COOKIE")) {
+  if (!argOn("ENABLE_COOKIE")) {
     log("Cookie 抓取已关闭，跳过");
     return;
   }
@@ -145,7 +158,7 @@ async function captureHeaders() {
 // ---- 每日签到（cron）----
 // fixed_legs: 关=随机 random=true；开=固定 5 random=false
 async function doCheckIn() {
-  const fixed = argTrue("FIXED_LEGS");
+  const fixed = argFixedLegs();
   const url = ATTEND_BASE + "?random=" + (fixed ? "false" : "true");
   const modeTag = fixed ? "固定" : "随机";
 

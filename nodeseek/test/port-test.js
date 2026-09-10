@@ -50,6 +50,7 @@ function runScript(opts) {
   });
 }
 
+// 模块参数值用 true/false；脚本额外兼容中文值，见 T11b
 const CAPTURE_ON = "MODE=capture&ENABLE_COOKIE=true";
 const CAPTURE_OFF = "MODE=capture&ENABLE_COOKIE=false";
 const CHECKIN_RANDOM = "MODE=checkin&FIXED_LEGS=false";
@@ -163,6 +164,25 @@ const STORED = JSON.stringify(headersFixture());
   {
     const r = await runScript({ argument: CHECKIN_RANDOM, stored: { nodeseek_headers: STORED }, httpImpl: () => ({ status: 200, body: '{"message":"今日已完成签到"}' }) });
     check("T11 已签到：透传服务端消息", r.notifications.some((n) => /今日已完成签到/.test(n.body)), JSON.stringify(r.notifications));
+  }
+
+  // T11b 中文值兼容（模块默认用 true/false，中文写法也应能识别）
+  {
+    const zh = await runScript({ argument: "MODE=capture&ENABLE_COOKIE=开", request: { url: GETINFO_URL, headers: headersFixture() } });
+    check("T11b 中文值「开」触发捕获", !!zh.writes["nodeseek_headers"]);
+    const zhOff = await runScript({ argument: "MODE=capture&ENABLE_COOKIE=关", request: { url: GETINFO_URL, headers: headersFixture() } });
+    check("T11b 中文值「关」跳过捕获", Object.keys(zhOff.writes).length === 0);
+    const asciiOff = await runScript({ argument: "MODE=capture&ENABLE_COOKIE=false", request: { url: GETINFO_URL, headers: headersFixture() } });
+    check("T11b ASCII 值 false 仍兼容（跳过）", Object.keys(asciiOff.writes).length === 0);
+    const asciiOn = await runScript({ argument: "MODE=capture&ENABLE_COOKIE=true", request: { url: GETINFO_URL, headers: headersFixture() } });
+    check("T11b ASCII 值 true 仍兼容（捕获）", !!asciiOn.writes["nodeseek_headers"]);
+
+    const zhFixed = await runScript({ argument: "MODE=checkin&FIXED_LEGS=固定", stored: { nodeseek_headers: STORED } });
+    check("T11b 中文值「固定」→ random=false", /random=false/.test(zhFixed.httpCalls[0].url));
+    const zhRandom = await runScript({ argument: "MODE=checkin&FIXED_LEGS=随机", stored: { nodeseek_headers: STORED } });
+    check("T11b 中文值「随机」→ random=true", /random=true/.test(zhRandom.httpCalls[0].url));
+    const emptyLegs = await runScript({ argument: "MODE=checkin", stored: { nodeseek_headers: STORED } });
+    check("T11b 未设 fixed_legs → 默认随机", /random=true/.test(emptyLegs.httpCalls[0].url));
   }
 
   // T12 无 $argument 且无 $request（脚本编辑器手动执行）→ 走签到

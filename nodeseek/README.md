@@ -29,14 +29,16 @@ Surge 的 `$httpClient` 无法像 `curl_cffi` 那样伪造 TLS 指纹。
 安装模块后，进入 模块 → NodeSeek签到 → 参数，可编辑这 4 项：
 
 - `enable_cookie` — Cookie 抓取开关，**默认 `true`**。访问一次个人名片页就会保存请求头，抓到后改成 `false`。
-- `fixed_legs` — 鸡腿模式。`false`（默认）= 随机鸡腿，`true` = 固定 5 鸡腿。
+- `fixed_legs` — 鸡腿领取方式。`false`（默认）= 随机，金额不定；`true` = 固定，每次领 5 个。
 - `hour` — 签到小时（24 小时制），默认 `10`。
 - `minute` — 签到分钟，默认 `0`。
 
 生成的实际 cron 为 `{{{minute}}} {{{hour}}} * * *`，即每天 `10:00`（设备时区）。
 
 > **Surge 的参数表只有一个整体描述字段**（`#!arguments-desc`），没有逐参数说明。
-> 因此每个参数的用途都写进了那段描述里，参数名也起得尽量自解释，Surge 里看到的才是完整的。
+> 因此每个参数的用途都写进了那段描述里，且必须写清每个取值的含义——
+> 例如 `fixed_legs` 要说明 `true` 是固定、`false` 是随机，否则用户只看得到两个布尔值。
+> 参数名受 Surge 限制只能用字母/数字/下划线，所以名字是英文、值和说明是中文。
 
 > 为什么把时间拆成「时」「分」两个数字参数，而不是一个 cron 表达式参数？
 > `#!arguments` 用逗号分隔参数，而 cron 常见写法（如 `30 8,20 * * *`）本身含逗号，
@@ -71,8 +73,8 @@ https://raw.githubusercontent.com/ouones/pingme-surge-signin/main/nodeseek/NodeS
 ## 测试
 
 ```bash
-node test/port-test.js     # 脚本逻辑：31 项
-node test/module-check.js  # 模块静态校验：27 项
+node test/port-test.js     # 脚本逻辑：38 项
+node test/module-check.js  # 模块静态校验：35 项
 ```
 
 覆盖：参数开关、匿名请求不覆盖有效数据、随机/固定鸡腿、缺失/损坏存储、403 重试与最终失败、

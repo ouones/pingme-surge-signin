@@ -7,6 +7,8 @@ const path = require("path");
 
 const MODULE = fs.readFileSync(path.join(__dirname, "..", "NodeSeek签到.sgmodule"), "utf8");
 const SCRIPT = fs.readFileSync(path.join(__dirname, "..", "NodeSeek.js"), "utf8");
+// 去掉注释后再做源码检查，避免把说明文字当成实现
+const SCRIPT_CODE = SCRIPT.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 
 let fails = 0;
 let total = 0;
@@ -85,12 +87,26 @@ check("MITM 用 %APPEND%（模块内不得用裸赋值）", /hostname\s*=\s*%APP
 check("不含 [Proxy]/[Proxy Group]（模块禁止）", !/\[Proxy( Group)?\]/.test(MODULE));
 
 // ---------- 脚本侧：参数名与脚本读取的 key 对齐 ----------
-check("脚本读取 ENABLE_COOKIE", SCRIPT.includes('argTrue("ENABLE_COOKIE")'));
-check("脚本读取 FIXED_LEGS", SCRIPT.includes('argTrue("FIXED_LEGS")'));
-check("脚本读取 MODE", SCRIPT.includes('arg("MODE")'));
-// 去掉注释后再做源码检查，避免把说明文字当成实现
-const SCRIPT_CODE = SCRIPT.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+check("脚本读取 ENABLE_COOKIE", /argOn\("ENABLE_COOKIE"\)/.test(SCRIPT_CODE));
+check("脚本读取 FIXED_LEGS", /argFixedLegs\(\)/.test(SCRIPT_CODE));
+check("脚本读取 MODE", /arg\("MODE"\)/.test(SCRIPT_CODE));
 
+// ---------- 参数值与脚本判定词表交叉校验 ----------
+// 中文值的可读性靠模块，能不能被识别靠脚本，两边必须对得上。
+const offBlob = (SCRIPT_CODE.match(/const OFF_WORDS = \[([^\]]+)\]/) || [])[1] || "";
+const fixedBlob = (SCRIPT_CODE.match(/const FIXED_WORDS = \[([^\]]+)\]/) || [])[1] || "";
+const inBlob = (blob, w) => new RegExp('"' + w + '"').test(blob);
+
+check("脚本定义了 OFF_WORDS / FIXED_WORDS 词表", !!offBlob && !!fixedBlob);
+check("脚本词表覆盖中文值", inBlob(offBlob, "关") && inBlob(fixedBlob, "固定"), "OFF=" + offBlob + " FIXED=" + fixedBlob);
+check("enable_cookie 默认值不会被判定为「关」", !inBlob(offBlob, params.enable_cookie), params.enable_cookie);
+check("fixed_legs 默认值不会被判定为「固定」", !inBlob(fixedBlob, params.fixed_legs), params.fixed_legs);
+check("布尔参数值用 true/false（不用中文）",
+  ["true", "false"].includes(params.enable_cookie) && ["true", "false"].includes(params.fixed_legs),
+  params.enable_cookie + " / " + params.fixed_legs);
+check("脚本仍兼容中文值（历史配置不失效）", inBlob(offBlob, "关") && inBlob(fixedBlob, "固定"));
+check("desc 同时写明随机与固定两种取值", /随机/.test(desc) && /固定/.test(desc));
+check("desc 写明固定对应的鸡腿数量", /5\s*个/.test(desc), desc.match(/[^｜]*固定[^｜]*/) || "");
 check("脚本不再使用 Egern 的 ctx.*/env 对象", !/\bctx\.(storage|http|env)\b/.test(SCRIPT_CODE));
 check("脚本用 Surge API（$persistentStore/$httpClient/$argument）",
   SCRIPT_CODE.includes("$persistentStore") && SCRIPT_CODE.includes("$httpClient") && SCRIPT_CODE.includes("$argument"));
