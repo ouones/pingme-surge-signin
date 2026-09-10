@@ -28,12 +28,15 @@ Surge 的 `$httpClient` 无法像 `curl_cffi` 那样伪造 TLS 指纹。
 
 安装模块后，进入 模块 → NodeSeek签到 → 参数，可编辑这 4 项：
 
-- `enable_cookie_capture` — Cookie 抓取开关，默认 `false`。**首次使用设为 `on`**，抓到后设回 `off`。
+- `enable_cookie` — Cookie 抓取开关，**默认 `true`**。访问一次个人名片页就会保存请求头，抓到后改成 `false`。
 - `fixed_legs` — 鸡腿模式。`false`（默认）= 随机鸡腿，`true` = 固定 5 鸡腿。
 - `hour` — 签到小时（24 小时制），默认 `10`。
 - `minute` — 签到分钟，默认 `0`。
 
 生成的实际 cron 为 `{{{minute}}} {{{hour}}} * * *`，即每天 `10:00`（设备时区）。
+
+> **Surge 的参数表只有一个整体描述字段**（`#!arguments-desc`），没有逐参数说明。
+> 因此每个参数的用途都写进了那段描述里，参数名也起得尽量自解释，Surge 里看到的才是完整的。
 
 > 为什么把时间拆成「时」「分」两个数字参数，而不是一个 cron 表达式参数？
 > `#!arguments` 用逗号分隔参数，而 cron 常见写法（如 `30 8,20 * * *`）本身含逗号，
@@ -49,16 +52,16 @@ https://raw.githubusercontent.com/ouones/pingme-surge-signin/main/nodeseek/NodeS
 
 1. 在 Surge「模块」中通过上面的 URL 安装，或下载后用本地模块安装。
 2. 确认 MITM 已开启，且 hostname 列表里出现 `www.nodeseek.com`（模块用 `%APPEND%` 追加）。
-3. 模块参数里把 `enable_cookie_capture` 设为 `on`。
+3. `enable_cookie` 默认已是 `true`，无需改动（若曾关掉，改回 `true`）。
 4. 用浏览器登录 NodeSeek，打开**自己的个人名片页**（会请求 `/api/account/getInfo/...`）。
-5. 收到「Cookie 成功」通知后，把 `enable_cookie_capture` 设回 `off`。
+5. 收到「Cookie 成功」通知后，把 `enable_cookie` 改为 `false`，避免每次浏览都重复捕获。
 6. 之后每天 10:00 自动签到，结果通过 Surge 通知推送。想立刻验证可在 Surge 的脚本编辑器里手动执行
    「NodeSeek签到」（会带上模块参数）。
 
 ## 已知限制
 
 - **请求头有效期未知。** `refract-sign` 是站点侧签名头，本模块靠原样回放工作。
-  如果站点给该签名加了时间窗，签到会 403，届时重新开启 `enable_cookie_capture` 抓一次即可。
+  如果站点给该签名加了时间窗，签到会 403，届时把 `enable_cookie` 重新设为 `true` 抓一次即可。
 - **403 是偶发的。** 脚本内置 3 次尝试（间隔 3s / 8s）；连续失败会推送「被风控」通知。
 - **抓到的请求头存在 Surge 本地**（`$persistentStore`，键名 `nodeseek_headers`），含 Cookie 与签名。
   不要把这个值分享给任何人，导出配置时注意。
@@ -69,7 +72,7 @@ https://raw.githubusercontent.com/ouones/pingme-surge-signin/main/nodeseek/NodeS
 
 ```bash
 node test/port-test.js     # 脚本逻辑：31 项
-node test/module-check.js  # 模块静态校验：26 项
+node test/module-check.js  # 模块静态校验：27 项
 ```
 
 覆盖：参数开关、匿名请求不覆盖有效数据、随机/固定鸡腿、缺失/损坏存储、403 重试与最终失败、

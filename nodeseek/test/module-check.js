@@ -45,9 +45,14 @@ check("占位符都已声明", placeholders.every((p) => p in params), "占位�
 check("无未使用的参数", Object.keys(params).every((p) => placeholders.includes(p)), Object.keys(params).filter((p) => !placeholders.includes(p)).join(",") || "OK");
 
 // ---------- 文档规则 3: #!arguments-desc 是整体描述（不逐条） ----------
+// Surge 参数表只显示一段整体描述，没有逐参数说明的字段，所以这段 must 覆盖所有参数名，
+// 否则用户在 Surge 里只能看到裸参数名，无法知道用途。
 const desc = meta("arguments-desc");
 check("存在 #!arguments-desc", !!desc);
 check("desc 不含 ASCII 逗号（避免被当作参数分隔）", desc && !desc.includes(","), desc);
+check("desc 覆盖全部参数名（Surge 无法逐参数说明）",
+  desc && Object.keys(params).every((p) => desc.includes(p)),
+  "缺失: " + Object.keys(params).filter((p) => !desc.includes(p)).join(",") || "OK");
 
 // ---------- 文档规则 4: requirement ----------
 const req = meta("requirement");
@@ -80,7 +85,7 @@ check("MITM 用 %APPEND%（模块内不得用裸赋值）", /hostname\s*=\s*%APP
 check("不含 [Proxy]/[Proxy Group]（模块禁止）", !/\[Proxy( Group)?\]/.test(MODULE));
 
 // ---------- 脚本侧：参数名与脚本读取的 key 对齐 ----------
-check("脚本读取 ENABLE_CAPTURE", SCRIPT.includes('argTrue("ENABLE_CAPTURE")'));
+check("脚本读取 ENABLE_COOKIE", SCRIPT.includes('argTrue("ENABLE_COOKIE")'));
 check("脚本读取 FIXED_LEGS", SCRIPT.includes('argTrue("FIXED_LEGS")'));
 check("脚本读取 MODE", SCRIPT.includes('arg("MODE")'));
 // 去掉注释后再做源码检查，避免把说明文字当成实现

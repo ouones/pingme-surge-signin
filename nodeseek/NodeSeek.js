@@ -119,7 +119,7 @@ function buildAttendHeaders(saved) {
 
 // ---- Cookie 捕获（http-request）----
 async function captureHeaders() {
-  if (!argTrue("ENABLE_CAPTURE")) {
+  if (!argTrue("ENABLE_COOKIE")) {
     log("Cookie 抓取已关闭，跳过");
     return;
   }

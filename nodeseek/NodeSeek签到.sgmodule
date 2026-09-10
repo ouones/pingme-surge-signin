@@ -3,11 +3,11 @@
 #!author=脚本移植自 @Nullwhy / @Curtinp118（Egern 版）
 #!homepage=https://github.com/ouones/pingme-surge-signin/tree/main/nodeseek
 #!requirement=CORE_VERSION>=20
-#!arguments=enable_cookie_capture:false,fixed_legs:false,hour:10,minute:0
-#!arguments-desc=首次使用：把「Cookie 抓取」设为 on 并访问一次 NodeSeek 个人名片页、收到成功通知后设回 off；此后每天按「时」「分」自动签到
+#!arguments=enable_cookie:true,fixed_legs:false,hour:10,minute:0
+#!arguments-desc=enable_cookie 默认已开启：访问一次 NodeSeek 个人名片页即可保存请求头，收到「Cookie 成功」通知后请把它改为 off。fixed_legs 控制鸡腿模式。hour、minute 控制每日签到时间
 
 [Script]
-NodeSeek捕获请求头 = type=http-request, pattern=^https:\/\/www\.nodeseek\.com\/api\/account\/getInfo\/, timeout=10, script-path=https://raw.githubusercontent.com/ouones/pingme-surge-signin/main/nodeseek/NodeSeek.js, script-update-interval=86400, argument=MODE=capture&ENABLE_CAPTURE={{{enable_cookie_capture}}}
+NodeSeek捕获请求头 = type=http-request, pattern=^https:\/\/www\.nodeseek\.com\/api\/account\/getInfo\/, timeout=10, script-path=https://raw.githubusercontent.com/ouones/pingme-surge-signin/main/nodeseek/NodeSeek.js, script-update-interval=86400, argument=MODE=capture&ENABLE_COOKIE={{{enable_cookie}}}
 NodeSeek签到 = type=cron, cronexp="{{{minute}}} {{{hour}}} * * *", timeout=60, script-path=https://raw.githubusercontent.com/ouones/pingme-surge-signin/main/nodeseek/NodeSeek.js, script-update-interval=86400, argument=MODE=checkin&FIXED_LEGS={{{fixed_legs}}}
 
 [MITM]

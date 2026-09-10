@@ -50,8 +50,8 @@ function runScript(opts) {
   });
 }
 
-const CAPTURE_ON = "MODE=capture&ENABLE_CAPTURE=true";
-const CAPTURE_OFF = "MODE=capture&ENABLE_CAPTURE=false";
+const CAPTURE_ON = "MODE=capture&ENABLE_COOKIE=true";
+const CAPTURE_OFF = "MODE=capture&ENABLE_COOKIE=false";
 const CHECKIN_RANDOM = "MODE=checkin&FIXED_LEGS=false";
 const CHECKIN_FIXED = "MODE=checkin&FIXED_LEGS=true";
 
