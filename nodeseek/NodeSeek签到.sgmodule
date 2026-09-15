@@ -7,8 +7,8 @@
 #!arguments-desc=fixed_legs 鸡腿领取方式：true=固定每次领 5 个，false=随机金额不定（默认）｜enable_cookie 填 true 时访问一次 NodeSeek 个人名片页即保存登录请求头，收到成功通知后改成 false｜hour 与 minute 是每日签到的小时与分钟（24 小时制）
 
 [Script]
-NodeSeek捕获请求头 = type=http-request, pattern=^https:\/\/www\.nodeseek\.com\/api\/account\/getInfo\/, timeout=10, script-path=https://raw.githubusercontent.com/ouones/pingme-surge-signin/main/nodeseek/NodeSeek.js, script-update-interval=86400, argument=MODE=capture&ENABLE_COOKIE={{{enable_cookie}}}
-NodeSeek签到 = type=cron, cronexp="{{{minute}}} {{{hour}}} * * *", timeout=60, script-path=https://raw.githubusercontent.com/ouones/pingme-surge-signin/main/nodeseek/NodeSeek.js, script-update-interval=86400, argument=MODE=checkin&FIXED_LEGS={{{fixed_legs}}}
+NodeSeek捕获请求头 = type=http-request, pattern=^https:\/\/www\.nodeseek\.com\/api\/account\/getInfo\/, timeout=10, script-path=https://raw.githubusercontent.com/ouones/pingme-surge-signin/main/nodeseek/NodeSeek.js?v=1.1.1, script-update-interval=3600, argument=MODE=capture&ENABLE_COOKIE={{{enable_cookie}}}
+NodeSeek签到 = type=cron, cronexp="{{{minute}}} {{{hour}}} * * *", timeout=60, script-path=https://raw.githubusercontent.com/ouones/pingme-surge-signin/main/nodeseek/NodeSeek.js?v=1.1.1, script-update-interval=3600, argument=MODE=checkin&FIXED_LEGS={{{fixed_legs}}}
 
 [MITM]
 hostname = %APPEND% www.nodeseek.com
