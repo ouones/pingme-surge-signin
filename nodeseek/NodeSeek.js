@@ -1,7 +1,7 @@
 /******************************
 脚本名称: NodeSeek
-Version : v1.1.0 (Surge)
-更新时间: 2026-09-10
+Version : v1.1.1 (Surge)
+更新时间: 2026-09-16
 平台: Surge (iOS / Mac)
 来源: 移植自 Nullwhy/Egern 的 Scripts/NodeSeek.js v1.1.2
       原始作者 @Curtinp118 / @Nullwhy
@@ -18,7 +18,8 @@ Version : v1.1.0 (Surge)
   - ctx.http    -> $httpClient
   - ctx.env     -> $argument（模块参数以 KEY=value&KEY2=value2 传入）
   - 捕获入口改用 http-request：只需要请求头，不必缓冲响应体
-  - 403 增加有限重试（站点风控为偶发）
+  - 补全浏览器指纹请求头
+  - 区分 Cloudflare challenge 与普通 403
 *******************************/
 
 const SCRIPT_NAME = "NodeSeek";
@@ -36,7 +37,12 @@ const DEFAULT_HEADERS = {
   "refract-sign": "",
   "User-Agent": "Mozilla/5.0",
   "refract-key": "",
+  "Sec-CH-UA": "",
+  "Sec-CH-UA-Mobile": "",
+  "Sec-CH-UA-Platform": "",
+  "Sec-Fetch-Dest": "empty",
   "Sec-Fetch-Mode": "cors",
+  "Sec-Fetch-Site": "same-origin",
   "Cookie": "",
   "Host": "www.nodeseek.com",
   "Referer": "https://www.nodeseek.com/",
@@ -100,6 +106,7 @@ function httpPost(opts) {
       if (err) return reject(err);
       resolve({
         status: resp && (resp.status || resp.statusCode),
+        headers: resp && (resp.headers || resp.responseHeaders || {}),
         body: typeof data === "string" ? data : ""
       });
     });
@@ -109,6 +116,15 @@ function httpPost(opts) {
 // ---- 请求头 ----
 function headerValue(src, key) {
   return src[key] || src[key.toLowerCase()] || src[key.toUpperCase()] || "";
+}
+
+function isCloudflareChallenge(res) {
+  if (!res || res.status !== 403) return false;
+  const cfMitigated = String(headerValue(res.headers, "cf-mitigated")).toLowerCase();
+  const server = String(headerValue(res.headers, "server")).toLowerCase();
+  const body = String(res.body || "").toLowerCase();
+  return cfMitigated === "challenge" ||
+    (server.indexOf("cloudflare") !== -1 && /just a moment|enable javascript and cookies|challenge/.test(body));
 }
 
 function pickHeaders(src) {
@@ -202,7 +218,11 @@ async function doCheckIn() {
     try { message = (JSON.parse(res.body) || {}).message || ""; } catch (e) {}
 
     if (status === 403) {
-      // 站点风控为偶发，重试通常能过
+      if (isCloudflareChallenge(res)) {
+        notify("Cloudflare 验证", "403：请求被 Cloudflare challenge 拦截，请在同一出口 IP 的浏览器完成验证后重新捕获请求头");
+        return;
+      }
+      // 普通 403 仍按原逻辑有限重试
       if (attempt <= RETRY_WAITS.length) {
         log("403，第 " + attempt + " 次重试");
         await sleep(RETRY_WAITS[attempt - 1]);

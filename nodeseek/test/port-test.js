@@ -25,7 +25,7 @@ function runScript(opts) {
         httpCalls.push(o);
         const r = opts.httpImpl ? opts.httpImpl(o, httpCalls.length) : { status: 200, body: '{"message":"签到成功，获得 5 个鸡腿"}' };
         if (r && r.__err) setTimeout(() => cb(r.__err, null, null), 0);
-        else setTimeout(() => cb(null, { status: r.status, statusCode: r.status }, r.body), 0);
+        else setTimeout(() => cb(null, { status: r.status, statusCode: r.status, headers: r.headers || {} }, r.body), 0);
       }
     };
     const fakeConsole = { log: (...a) => logs.push(a.join(" ")) };
@@ -60,6 +60,12 @@ function headersFixture(withCookie) {
   const h = {
     "refract-sign": "FAKE_SIGN_VALUE",
     "refract-key": "FAKE_KEY_VALUE",
+    "Sec-CH-UA": "\"Chromium\";v=\"140\", \"Not A;Brand\";v=\"24\"",
+    "Sec-CH-UA-Mobile": "?0",
+    "Sec-CH-UA-Platform": "\"iOS\"",
+    "Sec-Fetch-Dest": "empty",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Site": "same-origin",
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)",
     "Accept-Language": "zh-CN,zh-Hans;q=0.9"
   };
@@ -83,6 +89,7 @@ const STORED = JSON.stringify(headersFixture());
     check("T1 捕获：写入 nodeseek_headers", !!saved, saved ? Object.keys(saved).join(",") : "null");
     check("T1 捕获：保留 Cookie 值", saved && saved.Cookie === headersFixture().Cookie);
     check("T1 捕获：保留 refract-sign / refract-key", saved && saved["refract-sign"] === "FAKE_SIGN_VALUE" && saved["refract-key"] === "FAKE_KEY_VALUE");
+    check("T1 捕获：保留浏览器指纹头", saved && saved["Sec-CH-UA"] && saved["Sec-Fetch-Site"] === "same-origin");
     check("T1 捕获：通知成功且提示关闭开关", r.notifications.some((n) => /Cookie 成功/.test(n.sub) && /关闭/.test(n.body)), JSON.stringify(r.notifications));
     check("T1 捕获：不发 HTTP 请求（不干扰原请求）", r.httpCalls.length === 0);
   }
@@ -117,6 +124,7 @@ const STORED = JSON.stringify(headersFixture());
     check("T5 随机：URL random=true", /random=true/.test(call.url || ""), call.url);
     check("T5 随机：带捕获的 Cookie", h.Cookie === headersFixture().Cookie);
     check("T5 随机：带 refract-sign（旧脚本缺此头）", h["refract-sign"] === "FAKE_SIGN_VALUE");
+    check("T5 随机：带浏览器指纹头", h["Sec-CH-UA"] && h["Sec-Fetch-Dest"] === "empty" && h["Sec-Fetch-Site"] === "same-origin");
     check("T5 随机：补全缺失默认头 Host/Origin/Referer", h.Host === "www.nodeseek.com" && h.Origin === "https://www.nodeseek.com" && !!h.Referer);
     check("T5 随机：POST + 空 body", /post/i.test(r.logs.join(" ")) === false && call.body === "");
     check("T5 随机：通知签到成功（随机）", r.notifications.some((n) => /签到成功（随机）/.test(n.sub)), JSON.stringify(r.notifications));
@@ -144,6 +152,21 @@ const STORED = JSON.stringify(headersFixture());
     const r = await runScript({ argument: CHECKIN_RANDOM, stored: { nodeseek_headers: STORED }, httpImpl: () => ({ status: 403, body: "<html>403</html>" }) });
     check("T8 持续 403：请求 3 次后停止", r.httpCalls.length === 3, "实际 " + r.httpCalls.length);
     check("T8 持续 403：通知被风控", r.notifications.some((n) => /被风控/.test(n.sub)), JSON.stringify(r.notifications));
+  }
+
+  // T8b Cloudflare challenge → 不做无效重试，直接提示重新验证
+  {
+    const r = await runScript({
+      argument: CHECKIN_RANDOM,
+      stored: { nodeseek_headers: STORED },
+      httpImpl: () => ({
+        status: 403,
+        body: "<html><title>Just a moment...</title></html>",
+        headers: { "cf-mitigated": "challenge", server: "cloudflare" }
+      })
+    });
+    check("T8b Cloudflare：challenge 只请求 1 次", r.httpCalls.length === 1, "实际 " + r.httpCalls.length);
+    check("T8b Cloudflare：提示重新验证", r.notifications.some((n) => /Cloudflare 验证/.test(n.sub)), JSON.stringify(r.notifications));
   }
 
   // T9 存储损坏
