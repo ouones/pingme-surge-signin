@@ -1,0 +1,16 @@
+#!name=Duolingo Max（Surge 兼容配置）
+#!desc=使用 Surge 命名式脚本语法并追加 MITM 域名，保留上游脚本与匹配范围；不保证解决 MITM 连接重置或实现会员功能。
+#!author=Takagivegeta（原插件）, ouones（Surge 配置适配）
+#!homepage=https://github.com/ouones/pingme-surge-signin
+
+# 原插件：https://github.com/TAKAGIVEGETA/MyScripts/tree/main/lingoDuo
+# 安装前停用旧插件，避免同一响应被多个配置重复匹配。
+# 需要在 Surge 中安装并信任 MITM CA 证书，同时开启 MITM。
+# 脚本只匹配 /2023-05-23/batch，不匹配 /api/1/sync/batch 或 /2023-05-23/config。
+# 若仅开启 MITM 就出现 Connection reset，请停用本模块并检查其他配置中的相同 MITM 域名。
+
+[Script]
+DuolingoMax = type=http-response, pattern=^https?:\/\/(ios-api-[a-z0-9-]+|api\d+)\.duolingo\.c(n|om)\/2023-05-23\/batch, script-path=https://raw.githubusercontent.com/TAKAGIVEGETA/MyScripts/main/lingoDuo/lingoDuo-xaM.js, requires-body=true, timeout=120
+
+[MITM]
+hostname = %APPEND% ios-api-*.duolingo.com, ios-api-*.duolingo.cn, api*.duolingo.com, api*.duolingo.cn
