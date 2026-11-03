@@ -1,0 +1,16 @@
+#!name = PingMe签到
+#!desc = 获取签到参数，每天自动签到并执行视频奖励任务
+#!author = fmz200
+#!homepage = https://github.com/ouones/pingme-surge-signin
+#!loon_version = 3.5.1(983)
+
+[Argument]
+enable_capture = switch,true,tag=获取签到参数,desc=打开 PingMe 触发抓取；收到成功通知后可关闭
+cron = input,"30 8,20 * * *",tag=签到时间,desc=五段 Cron 表达式；默认每天 08:30 和 20:30
+
+[Script]
+request if ${url} ~= /^https:\/\/api\.pingmeapp\.net\/app\/queryBalanceAndBonus/i then script("https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/cookie/get_cookie.js") with enable=${enable_capture}, tag="PingMe获取签到参数", timeout=60
+cron ${cron} then script("https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/PingMe/PingMeSignin.js") with tag="PingMe签到", timeout=300
+
+[Mitm]
+hostname = api.pingmeapp.net
