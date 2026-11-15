@@ -1,0 +1,9 @@
+#!name=网络自适应切换
+#!desc=当设备在 Wi-Fi 与蜂窝移动网络之间切换时，自动切换指定策略组的选中节点。
+#!author=ouones
+#!arguments=group:香港 select,wifi_policy:🇭🇰 HK-CDT-01,cellular_policy:🇭🇰 HK-hkcloudx-v6-01,notify:true
+#!arguments-desc=group: 需要自动切换的策略组名称\nwifi_policy: 处于 Wi-Fi 环境时选中的节点名称\ncellular_policy: 处于蜂窝移动网络时选中的节点名称\nnotify: 是否在切换时弹出通知 (true/false)
+#!category=策略分流
+
+[Script]
+网络自适应切换 = type=event, event-name=network-changed, script-path=https://raw.githubusercontent.com/ouones/pingme-surge-signin/main/NetworkSwitch.js, timeout=10, argument="group={{{group}}}&wifi={{{wifi_policy}}}&cellular={{{cellular_policy}}}&notify={{{notify}}}"

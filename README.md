@@ -6,6 +6,7 @@
 |---|---|---|
 | PingMe签到 | PingMe 自动签到、任务和视频奖励 | [根目录](./PingMe签到.sgmodule) |
 | NodeSeek签到 | NodeSeek 自动签到（抓取浏览器请求头 + 每日定时） | [`nodeseek/`](./nodeseek/) |
+| 网络自适应切换 | Wi-Fi 与蜂窝网络切换时自动更改策略组选中节点 | [根目录](./网络自适应切换.sgmodule) |
 
 ---
 
@@ -70,6 +71,27 @@ https://raw.githubusercontent.com/ouones/pingme-surge-signin/main/nodeseek/NodeS
 ```
 
 可编辑参数：`enable_cookie_capture` / `fixed_legs` / `hour` / `minute`。
+
+---
+
+## 网络自适应切换模块
+
+当设备在 Wi-Fi 与蜂窝数据之间切换时，自动将指定策略组的选中项调整为目标节点。
+
+### 模块 URL
+
+```text
+https://raw.githubusercontent.com/ouones/pingme-surge-signin/main/网络自适应切换.sgmodule
+```
+
+### 可配置参数 (Arguments)
+
+在 Surge 模块详情页中可直接编辑以下参数：
+
+- `group`：需要自动切换的策略组名称（默认：`香港 select`）
+- `wifi_policy`：Wi-Fi 环境下选中的节点名称（默认：`🇭🇰 HK-CDT-01`）
+- `cellular_policy`：蜂窝移动网络下选中的节点名称（默认：`🇭🇰 HK-hkcloudx-v6-01`）
+- `notify`：是否在切换时弹出系统通知，可选 `true` 或 `false`（默认：`true`）
 
 ---
 
