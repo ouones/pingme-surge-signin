@@ -86,12 +86,18 @@ https://raw.githubusercontent.com/ouones/pingme-surge-signin/main/网络自适�
 
 ### 可配置参数 (Arguments)
 
-在 Surge 模块详情页中可直接编辑以下参数：
+在 Surge 模块详情页中可直接编辑以下双槽位参数：
 
-- `group`：需要自动切换的策略组名称（默认：`香港 select`）
-- `wifi_policy`：Wi-Fi 环境下选中的节点名称（默认：`🇭🇰 HK-CDT-01`）
-- `cellular_policy`：蜂窝移动网络下选中的节点名称（默认：`🇭🇰 HK-hkcloudx-v6-01`）
-- `notify`：是否在切换时弹出系统通知，可选 `true` 或 `false`（默认：`true`）
+- **槽位 1**：
+  - `group1`：策略组 1 名称（默认：`香港 select`）
+  - `wifi1`：Wi-Fi 环境下策略组 1 的目标节点（默认：`🇭🇰 HK-CDT-01`）
+  - `cellular1`：蜂窝网络下策略组 1 的目标节点（默认：`🇭🇰 HK-hkcloudx-v6-01`）
+- **槽位 2（选填，留空则不生效）**：
+  - `group2`：策略组 2 名称（例如：`美国 select`）
+  - `wifi2`：Wi-Fi 环境下策略组 2 的目标节点
+  - `cellular2`：蜂窝网络下策略组 2 的目标节点
+- **通用**：
+  - `notify`：是否在切换时弹出系统通知，可选 `true` 或 `false`（默认：`true`）
 
 ---
 
